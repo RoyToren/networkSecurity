@@ -7,27 +7,27 @@ import java.util.concurrent.Executors;
 public class Simulation {
     public static void main(String[] args) {
         Scanner input = new Scanner(System.in);
-        System.out.println("please enter number of clocks and number of byzantine");
+        System.out.println("please enter the following numbers with spaces to separate : number of clocks, number of byzantine, number of rounds and clock size");
         int clockAmount = input.nextInt();
         int byzantineAmount = input.nextInt();
-        int maxClockSize = 10;
-
+        int rounds = input.nextInt();
+        int maxClockSize = input.nextInt();
         ExecutorService ex = Executors.newFixedThreadPool(clockAmount);
         System.out.println("Started " + clockAmount + " Clocks.");
-        Algo algo = new Algo(clockAmount, byzantineAmount, maxClockSize);
+        Algo algo = new Algo(clockAmount, byzantineAmount, maxClockSize, rounds);
 
-        createClocks(clockAmount, byzantineAmount, maxClockSize, ex, algo);
+        createClocks(clockAmount, byzantineAmount, ex, algo);
         System.out.println("Clocks finished, exiting");
         ex.shutdown();
     }
 
-    private static void createClocks(int clockAmount, int byzantineAmount, int maxClockSize, ExecutorService ex, Algo algo) {
+    private static void createClocks(int clockAmount, int byzantineAmount, ExecutorService ex, Algo algo) {
         for (int i = 0; i < clockAmount - byzantineAmount; i++) {
-            Clock clk = new Clock(false, maxClockSize, algo);
+            Clock clk = new Clock(false, algo);
             ex.execute(clk);
         }
         for (int i = 0; i < byzantineAmount; i++) {
-            Clock clk = new Clock(true, maxClockSize, algo);
+            Clock clk = new Clock(true, algo);
             ex.execute(clk);
         }
     }

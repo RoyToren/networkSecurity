@@ -4,31 +4,34 @@ package RandomizedAlgoSimulation;
 import java.util.*;
 import java.util.concurrent.BrokenBarrierException;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.CyclicBarrier;
 
 import static java.util.Collections.synchronizedCollection;
 
 public class Algo {
 
-    public CyclicBarrier currRoundBarrier;
-    public Collection<Clock> clocks;
-    public ConcurrentHashMap<Integer, Clock> byzantineClocks;
-    public int numOfRounds = 8;
+    private CyclicBarrier currRoundBarrier;
+    private Collection<Clock> clocks;
+    private ConcurrentMap<Integer, Clock> byzantineClocks;
+    private int numOfRounds;
     /* Since we process one round at a time, we collect messages here. */
-    public ConcurrentHashMap<Integer, Integer> currRoundValues;
-    int clockAmount, byzantineAmount;
-    int id = 0;
-    int maxClockSize;
-    boolean isReady = false;
+    private ConcurrentMap<Integer, Integer> currRoundValues;
+    private int clockAmount;
+    private int byzantineAmount;
+    private int id = 0;
+    private int maxClockSize;
+    private boolean isReady = false;
 
-    public Algo(int clockAmount, int byzantineAmount, int maxClockSize) {
+    Algo(int clockAmount, int byzantineAmount, int maxClockSize, int numberOfRounds) {
         this.clockAmount = clockAmount;
         this.maxClockSize = maxClockSize;
         this.clocks = synchronizedCollection(new ArrayList<Clock>());
         this.byzantineAmount = byzantineAmount;
+        this.numOfRounds = numberOfRounds;
         currRoundValues = new ConcurrentHashMap<>();
         byzantineClocks = new ConcurrentHashMap<>();
-        currRoundBarrier = new CyclicBarrier(this.clockAmount, new handleRoundEnd());
+        currRoundBarrier = new CyclicBarrier(this.clockAmount, new HandleRoundEnd());
     }
 
 
@@ -41,15 +44,15 @@ public class Algo {
      *
      * @param clock
      */
-    public synchronized void InitializeClocks(Clock clock) throws InterruptedException {
+    public synchronized void initializeClocks(Clock clock) throws InterruptedException {
         clock.assignId(id++);
-        clock.currValue = getRandomNumberInClockSize(maxClockSize);
-        if (clock.isByzantine) {
+        clock.setCurrValue(getRandomNumberInClockSize(maxClockSize));
+        if (clock.isByzantine()) {
             byzantineClocks.put(id, clock);
         } else {
             clocks.add(clock);
         }
-        currRoundValues.put(clock.id, clock.currValue);
+        currRoundValues.put(clock.getId(), clock.getCurrValue());
         if (clocks.size() + byzantineClocks.size() == clockAmount) {
             // We are last clock to report, let's begin.
             isReady = true;
@@ -68,37 +71,36 @@ public class Algo {
     public void handleRound(Clock currClock, int round) throws BrokenBarrierException, InterruptedException {
         int counter = 0;
         for (Integer key : currRoundValues.keySet()) {
-            if (currClock.id != key && !currClock.isByzantine) {
+            if (currClock.getId() != key && !currClock.isByzantine()) {
                 if (byzantineClocks.containsKey(key)) {
                     counter += getRandomNumberInClockSize(1);//(int) Math.round(Math.random()); //todo: need to add a timeout cas as well
-                } else if (currClock.currValue == currRoundValues.get(key)) {
+                } else if (currClock.getCurrValue()== currRoundValues.get(key)) {
                     counter++;
                 }
             }
         }
         if (counter < clockAmount - byzantineAmount - 1) {
-            currClock.currValue = 0;
-            currClock.lastIncrement = false;
+            currClock.setCurrValue(0);
+            currClock.setLastIncrement(false);
         } else {
-            if (currClock.currValue != 0) {
-                currClock.currValue = (currClock.currValue + 1) % maxClockSize;
-                currClock.lastIncrement = true;
+            if (currClock.getCurrValue() != 0) {
+                currClock.setCurrValue((currClock.getCurrValue() + 1) % maxClockSize);
+                currClock.setLastIncrement(true);
             } else {
-                if (currClock.lastIncrement) {
-                    currClock.currValue = 1;
+                if (currClock.isLastIncrement()) {
+                    currClock.setCurrValue(1);
                 } else {
-                    currClock.currValue = getRandomNumberInClockSize(1);
-                    //currClock.currValue = (int) Math.round(Math.random());
+                    currClock.setCurrValue(getRandomNumberInClockSize(1));
                 }
-                if (currClock.currValue == 1) {
-                    currClock.lastIncrement = true;
+                if (currClock.getCurrValue() == 1) {
+                    currClock.setLastIncrement(true);
                 } else {
-                    currClock.lastIncrement = false;
+                    currClock.setLastIncrement(false);
                 }
             }
         }
-        if(!currClock.isByzantine) {
-            System.out.println("round: " + round + " id: " + currClock.id + " value is: " + currClock.currValue + " amount of clocks with the same value I had: " + counter);
+        if(!currClock.isByzantine()) {
+            System.out.println("round: " + round + " id: " + currClock.getId() + " value is: " + currClock.getCurrValue() + " amount of clocks with the same value I had: " + counter);
         }
         int arrive_index = currRoundBarrier.await();
 
@@ -109,20 +111,24 @@ public class Algo {
         }
     }
 
-    public static int getRandomNumberInClockSize(int max) {
+    private static int getRandomNumberInClockSize(int max) {
         Random r = new Random();
         return r.nextInt((max - 0) + 1) + 0;
     }
 
+    public int getNumOfRounds() {
+        return numOfRounds;
+    }
 
-    private class handleRoundEnd implements Runnable {
+
+    private class HandleRoundEnd implements Runnable {
         @Override
         public void run() {
             System.out.println("\n end of current round \n");
             System.out.println("current values:");
             for (Clock clock : clocks) {
-                currRoundValues.replace(clock.id, clock.currValue);
-                System.out.println("id: " + clock.id + " value: " + clock.currValue);
+                currRoundValues.replace(clock.getId(), clock.getCurrValue());
+                System.out.println("id: " + clock.getId() + " value: " + clock.getCurrValue());
             }
         }
     }

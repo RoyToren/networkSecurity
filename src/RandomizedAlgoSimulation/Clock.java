@@ -1,23 +1,44 @@
 package RandomizedAlgoSimulation;
 
-import java.util.ArrayList;
 import java.util.concurrent.BrokenBarrierException;
 
 public class Clock implements Runnable {
 
     private Algo algo;
-    public int currValue;
-    public int id;
-    public boolean isByzantine;
-    public int maxClockSize;
-    public boolean lastIncrement;
-    public ArrayList<Integer> roundsValues;
+    private int currValue;
+    private int id;
+    private boolean isByzantine;
 
-    public Clock(boolean isByzantine, int maxClockSize, Algo algo) {
+    public void setLastIncrement(boolean lastIncrement) {
+        this.lastIncrement = lastIncrement;
+    }
+
+    private boolean lastIncrement;
+
+    public int getCurrValue() {
+        return currValue;
+    }
+
+    public int getId() {
+        return id;
+    }
+
+    public boolean isByzantine() {
+        return isByzantine;
+    }
+
+    public boolean isLastIncrement() {
+        return lastIncrement;
+    }
+
+    public void setCurrValue(int currValue) {
+        this.currValue = currValue;
+    }
+
+    Clock(boolean isByzantine, Algo algo) {
         this.lastIncrement = false;
         this.isByzantine = isByzantine;
         this.algo = algo;
-        this.maxClockSize = maxClockSize;
     }
 
     /*        public boolean majority(Vector<Message> messages) {
@@ -43,12 +64,13 @@ public class Clock implements Runnable {
     /**
      * Communication phase: Iterative approach.
      */
-    public void startSimulation() throws InterruptedException, BrokenBarrierException {
-        algo.InitializeClocks(this);
+    private void startSimulation() throws InterruptedException, BrokenBarrierException {
+        algo.initializeClocks(this);
         System.out.println("initialized clock number " + id + "value:" + currValue);
 
-        for (int round = 0; round < algo.numOfRounds; round++) {
+        for (int round = 0; round < algo.getNumOfRounds(); round++) {
             algo.handleRound(this, round);
         }
     }
+
 }
