@@ -10,7 +10,6 @@ import static java.util.Collections.synchronizedCollection;
 
 public class Algo {
 
-    public static int count = 0;
     public CyclicBarrier currRoundBarrier;
     public Collection<Clock> clocks;
     public ConcurrentHashMap<Integer, Clock> byzantineClocks;
@@ -71,7 +70,7 @@ public class Algo {
         for (Integer key : currRoundValues.keySet()) {
             if (currClock.id != key && !currClock.isByzantine) {
                 if (byzantineClocks.containsKey(id)) {
-                    counter += getRandomNumberInClockSize(1);//(int) Math.round(Math.random()); //todo: need to add a timeout cas as well
+                    counter += 1;//(int) Math.round(Math.random());//getRandomNumberInClockSize(1); //todo: need to add a timeout cas as well
                 } else if (currClock.currValue == currRoundValues.get(key)) {
                     counter++;
                 }
@@ -98,7 +97,7 @@ public class Algo {
                 }
             }
         }
-        System.out.println("my id is: " + currClock.id + " and the round is: " + round + " my current value is: " + currClock.currValue);
+        System.out.println("round: " + round + " id: " + currClock.id + " value is: " + currClock.currValue + " amount of clocks with the same value I had: " + counter);
         int arrive_index = currRoundBarrier.await();
 
         // This is not racy because threads will all reach send barrier
