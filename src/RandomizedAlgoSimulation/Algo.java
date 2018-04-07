@@ -69,8 +69,8 @@ public class Algo {
         int counter = 0;
         for (Integer key : currRoundValues.keySet()) {
             if (currClock.id != key && !currClock.isByzantine) {
-                if (byzantineClocks.containsKey(id)) {
-                    counter += 1;//(int) Math.round(Math.random());//getRandomNumberInClockSize(1); //todo: need to add a timeout cas as well
+                if (byzantineClocks.containsKey(key)) {
+                    counter += getRandomNumberInClockSize(1);//(int) Math.round(Math.random()); //todo: need to add a timeout cas as well
                 } else if (currClock.currValue == currRoundValues.get(key)) {
                     counter++;
                 }
@@ -97,7 +97,9 @@ public class Algo {
                 }
             }
         }
-        System.out.println("round: " + round + " id: " + currClock.id + " value is: " + currClock.currValue + " amount of clocks with the same value I had: " + counter);
+        if(!currClock.isByzantine) {
+            System.out.println("round: " + round + " id: " + currClock.id + " value is: " + currClock.currValue + " amount of clocks with the same value I had: " + counter);
+        }
         int arrive_index = currRoundBarrier.await();
 
         // This is not racy because threads will all reach send barrier
