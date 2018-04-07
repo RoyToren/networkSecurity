@@ -13,7 +13,6 @@ public class Algo {
 
     private CyclicBarrier currRoundBarrier;
     private Collection<Clock> clocks;
-    private ConcurrentMap<Integer, Clock> byzantineClocks;
     private int numOfRounds;
     /* Since we process one round at a time, we collect messages here. */
     private ConcurrentMap<Integer, Integer> currRoundValues;
@@ -30,8 +29,7 @@ public class Algo {
         this.byzantineAmount = byzantineAmount;
         this.numOfRounds = numberOfRounds;
         currRoundValues = new ConcurrentHashMap<>();
-        byzantineClocks = new ConcurrentHashMap<>();
-        currRoundBarrier = new CyclicBarrier(this.clockAmount, new HandleRoundEnd());
+        currRoundBarrier = new CyclicBarrier(this.clockAmount-this.byzantineAmount, new HandleRoundEnd());
     }
 
 
@@ -47,13 +45,9 @@ public class Algo {
     public synchronized void initializeClocks(Clock clock) throws InterruptedException {
         clock.assignId(id++);
         clock.setCurrValue(getRandomNumberInClockSize(maxClockSize));
-        if (clock.isByzantine()) {
-            byzantineClocks.put(id, clock);
-        } else {
-            clocks.add(clock);
-        }
+        clocks.add(clock);
         currRoundValues.put(clock.getId(), clock.getCurrValue());
-        if (clocks.size() + byzantineClocks.size() == clockAmount) {
+        if (clocks.size() + byzantineAmount == clockAmount) {
             // We are last clock to report, let's begin.
             isReady = true;
             notifyAll();
@@ -70,14 +64,15 @@ public class Algo {
      */
     public void handleRound(Clock currClock, int round) throws BrokenBarrierException, InterruptedException {
         int counter = 0;
-        for (Integer key : currRoundValues.keySet()) {
-            if (currClock.getId() != key && !currClock.isByzantine()) {
-                if (byzantineClocks.containsKey(key)) {
-                    counter += getRandomNumberInClockSize(1);//(int) Math.round(Math.random()); //todo: need to add a timeout cas as well
-                } else if (currClock.getCurrValue()== currRoundValues.get(key)) {
+        for (Map.Entry<Integer, Integer> entry : currRoundValues.entrySet()) {
+            if (currClock.getId() != entry.getKey()) {
+                if (currClock.getCurrValue() == entry.getValue()) {
                     counter++;
                 }
             }
+        }
+        for (int i = 0; i < byzantineAmount; i++) {
+            counter += getRandomNumberInClockSize(1);//(int) Math.round(Math.random()); //todo: need to add a timeout cas as well
         }
         if (counter < clockAmount - byzantineAmount - 1) {
             currClock.setCurrValue(0);
@@ -99,9 +94,7 @@ public class Algo {
                 }
             }
         }
-        if(!currClock.isByzantine()) {
-            System.out.println("round: " + round + " id: " + currClock.getId() + " value is: " + currClock.getCurrValue() + " amount of clocks with the same value I had: " + counter);
-        }
+        System.out.println("round: " + round + " id: " + currClock.getId() + " value is: " + currClock.getCurrValue() + " amount of clocks with the same value I had: " + counter);
         int arrive_index = currRoundBarrier.await();
 
         // This is not racy because threads will all reach send barrier

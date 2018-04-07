@@ -23,11 +23,7 @@ public class Simulation {
 
     private static void createClocks(int clockAmount, int byzantineAmount, ExecutorService ex, Algo algo) {
         for (int i = 0; i < clockAmount - byzantineAmount; i++) {
-            Clock clk = new Clock(false, algo);
-            ex.execute(clk);
-        }
-        for (int i = 0; i < byzantineAmount; i++) {
-            Clock clk = new Clock(true, algo);
+            Clock clk = new Clock(algo);
             ex.execute(clk);
         }
     }

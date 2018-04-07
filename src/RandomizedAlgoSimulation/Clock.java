@@ -7,7 +7,6 @@ public class Clock implements Runnable {
     private Algo algo;
     private int currValue;
     private int id;
-    private boolean isByzantine;
 
     public void setLastIncrement(boolean lastIncrement) {
         this.lastIncrement = lastIncrement;
@@ -23,10 +22,6 @@ public class Clock implements Runnable {
         return id;
     }
 
-    public boolean isByzantine() {
-        return isByzantine;
-    }
-
     public boolean isLastIncrement() {
         return lastIncrement;
     }
@@ -35,9 +30,8 @@ public class Clock implements Runnable {
         this.currValue = currValue;
     }
 
-    Clock(boolean isByzantine, Algo algo) {
+    Clock(Algo algo) {
         this.lastIncrement = false;
-        this.isByzantine = isByzantine;
         this.algo = algo;
     }
 
