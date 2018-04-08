@@ -13,11 +13,11 @@ public class Simulation {
         int rounds = input.nextInt();
         int maxClockSize = input.nextInt();
         ExecutorService ex = Executors.newFixedThreadPool(clockAmount);
-        System.out.println("Started " + clockAmount + " Clocks.");
+        System.out.println("simulation with " + clockAmount + " clocks, " +byzantineAmount+ " of the are byzantine");
         Algo algo = new Algo(clockAmount, byzantineAmount, maxClockSize, rounds);
 
         createClocks(clockAmount, byzantineAmount, ex, algo);
-        System.out.println("Clocks finished, exiting");
+        System.out.println("simulation ended");
         ex.shutdown();
     }
 

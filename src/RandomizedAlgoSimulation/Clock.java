@@ -35,14 +35,6 @@ public class Clock implements Runnable {
         this.algo = algo;
     }
 
-    /*        public boolean majority(Vector<Message> messages) {
-            int truth_sum = 0;
-            for (Message m : messages) {
-                truth_sum += (m.value ? 1 : -1);
-            }
-            return (truth_sum > 0);  // More trues than falses?
-        }*/
-
     public void assignId(int id) {
         this.id = id;
     }
@@ -55,9 +47,6 @@ public class Clock implements Runnable {
         }
     }
 
-    /**
-     * Communication phase: Iterative approach.
-     */
     private void startSimulation() throws InterruptedException, BrokenBarrierException {
         algo.initializeClocks(this);
         System.out.println("initialized clock number " + id + "value:" + currValue);

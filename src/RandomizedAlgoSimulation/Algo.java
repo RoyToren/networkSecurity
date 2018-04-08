@@ -14,7 +14,6 @@ public class Algo {
     private CyclicBarrier currRoundBarrier;
     private Collection<Clock> clocks;
     private int numOfRounds;
-    /* Since we process one round at a time, we collect messages here. */
     private ConcurrentMap<Integer, Integer> currRoundValues;
     private int clockAmount;
     private int byzantineAmount;
@@ -33,35 +32,21 @@ public class Algo {
     }
 
 
-    /**
-     * Report for duty. Registers Clock instance with the Algo and blocks
-     * until all clocks are accounted for. Since method is synchronized,
-     * callers acquire intrinsic lock on this object and we can do stuff like
-     * wait() and notify().
-     * Could also use CyclicBarrier here.. not as much fun.
-     *
-     * @param clock
-     */
     public synchronized void initializeClocks(Clock clock) throws InterruptedException {
         clock.assignId(id++);
         clock.setCurrValue(getRandomNumberInClockSize(maxClockSize));
         clocks.add(clock);
         currRoundValues.put(clock.getId(), clock.getCurrValue());
         if (clocks.size() + byzantineAmount == clockAmount) {
-            // We are last clock to report, let's begin.
             isReady = true;
             notifyAll();
         } else {
-            /* Loop to handle spurious wakeups; e.g. from signals. */
             while (!isReady) {
                 wait();
             }
         }
     }
 
-    /**
-     * Block until all clocks are heard from, then return received messages.
-     */
     public void handleRound(Clock currClock, int round) throws BrokenBarrierException, InterruptedException {
         int counter = 0;
         for (Map.Entry<Integer, Integer> entry : currRoundValues.entrySet()) {
@@ -94,14 +79,14 @@ public class Algo {
                 }
             }
         }
-        System.out.println("round: " + round + " id: " + currClock.getId() + " value is: " + currClock.getCurrValue() + " amount of clocks with the same value I had: " + counter);
+        System.out.println("id: " + currClock.getId() + " new value: " + currClock.getCurrValue() + " clocks amount with same value: " + counter + " round: " + round);
         int arrive_index = currRoundBarrier.await();
 
-        // This is not racy because threads will all reach send barrier
+        // This is not racy because threads will all reach send barrier todo: check if needed
         // before reentering here.
-        if (arrive_index == 0) {
+ /*       if (arrive_index == 0) {
             currRoundBarrier.reset();
-        }
+        }*/
     }
 
     private static int getRandomNumberInClockSize(int max) {
@@ -118,7 +103,7 @@ public class Algo {
         @Override
         public void run() {
             System.out.println("\n end of current round \n");
-            System.out.println("current values:");
+            System.out.println("values at round start:");
             for (Clock clock : clocks) {
                 currRoundValues.replace(clock.getId(), clock.getCurrValue());
                 System.out.println("id: " + clock.getId() + " value: " + clock.getCurrValue());
